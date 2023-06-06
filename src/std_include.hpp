@@ -22,7 +22,7 @@
 	#undef min
 #endif
 
-#include <algorithm>
+
 #include <cassert>
 #include <cctype>
 #include <csignal>
@@ -30,12 +30,15 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+
+#include <algorithm>
 #include <fstream>
 #include <functional>
 #include <iostream>
 #include <mutex>
 #include <random>
 #include <ranges>
+#include <span>
 #include <sstream>
 #include <utility>
 #include <vector>

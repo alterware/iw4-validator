@@ -6,116 +6,86 @@
 #include "game/cg_client_side_effects_mp.hpp"
 
 #include <utils/io.hpp>
+#include <utils/string.hpp>
 
 namespace
 {
-	bool load_client_effects(const std::string& filename)
+	void load_client_effects(const std::string& filename)
 	{
+		assert(!filename.empty());
 		if (filename.empty())
 		{
-			console::error("filename parameter is empty\n");
-			return false;
+			throw std::runtime_error("filename parameter is empty");
 		}
 
-		const auto data = utils::io::read_file(filename);
-		if (data.empty())
+		std::string data;
+		if (!utils::io::read_file(filename, &data) || data.empty())
 		{
-			console::error("'%s' is empty\n", filename.data());
-			return false;
+			throw std::runtime_error(utils::string::va("'%s' is empty", filename.data()));
 		}
 
-		return game::parse_client_effects(data.data());
+		game::parse_client_effects(data.data());
 	}
 
-	bool load_map_rotation(const std::string& filename)
+	void load_map_rotation(const std::string& filename)
 	{
+		assert(!filename.empty());
 		if (filename.empty())
 		{
-			console::error("filename parameter is empty\n");
-			return false;
+			throw std::runtime_error("filename parameter is empty");
 		}
 
-		const auto data = utils::io::read_file(filename);
-		if (data.empty())
+		std::string data;
+		if (!utils::io::read_file(filename, &data) || data.empty())
 		{
-			console::error("'%s' is empty\n", filename.data());
-			return false;
+			throw std::runtime_error(utils::string::va("'%s' is empty", filename.data()));
 		}
 
 		try
 		{
 			map_rotation::rotation_data rotation_data;
 			rotation_data.parse(data);
+
+			console::info("Successfully parsed map rotation\n");
 		}
 		catch (const std::exception& ex)
 		{
-			console::error("%s: '%s' contains invalid data!\n", ex.what(), filename.data());
-			return false;
+			console::error(utils::string::va("%s: '%s' contains invalid data!", ex.what(), filename.data()));
 		}
-
-		console::info("Successfully parsed map rotation\n");
-		return true;
 	}
-}
 
-int unsafe_main(std::string&& prog, std::vector<std::string>&& args)
-{
-	// Parse command-line flags (only increment i for matching flags)
-	for (auto i = args.begin(); i != args.end();)
+	void unsafe_main(const std::span<char*> s)
 	{
-		if (*i == "-createfx")
+		auto p = [&](const std::string& o, const std::function <void(const std::string&)>& c) -> void
 		{
-			++i;
-			const auto filename = i != args.end() ? *i++ : std::string();
-			console::info("Parsing createfx '%s'\n", filename.data());
-
-			if (!load_client_effects(filename))
+			auto r(s | std::views::transform([](char* v) -> std::string
 			{
-				return EXIT_FAILURE;
-			}
-		}
-		else if (*i == "-map-rotation")
-		{
-			++i;
-			const auto filename = i != args.end() ? *i++ : std::string();
-			console::info("Parsing map rotation '%s'\n", filename.data());
+				return { v };
+			}));
 
-			if (!load_map_rotation(filename))
+			const auto i(std::ranges::find(r, o));
+			const auto e(r.end());
+
+			if (auto n(i != e ? std::ranges::next(i, 1, e) : e); i != e && n != e)
 			{
-				return EXIT_FAILURE;
+				c({ *n });
 			}
+		};
 
-		}
-		else
-		{
-			console::info("X Labs IW4x validator tool\n"
-				"Usage: %s OPTIONS\n"
-				"  -createfx <filename>\n"
-				"  -fx <filename>\n"
-				"  -map-rotation <filename>\n",
-				prog.data()
-			);
-
-			return EXIT_FAILURE;
-		}
+		p("-createfx", load_client_effects);
+		p("-map-rotation", load_map_rotation);
 	}
-
-	return EXIT_SUCCESS;
 }
 
 int main(int argc, char* argv[])
 {
-	console::set_title("X Labs IW4x-validator");
-	console::log("Starting X Labs IW4x-validator");
+	console::set_title("AlterWare IW4x-validator");
+	console::log("Starting AlterWare iw4-validator");
 
 	try
 	{
-		std::string prog(argv[0]);
-		std::vector<std::string> args;
-
-		args.reserve(argc - 1);
-		args.assign(argv + 1, argv + argc);
-		return unsafe_main(std::move(prog), std::move(args));
+		unsafe_main(std::span(argv, argc));
+		return EXIT_SUCCESS;
 	}
 	catch (const std::exception& ex)
 	{
