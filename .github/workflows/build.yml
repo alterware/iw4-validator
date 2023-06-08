@@ -107,6 +107,7 @@ jobs:
           name: Linux ${{matrix.configuration}} ${{matrix.arch}} binaries
           path: |
             build/bin/${{matrix.arch}}/${{matrix.configuration}}/iw4-validator
+
   build-mac:
     name: Build macOS
     runs-on: macos-13
