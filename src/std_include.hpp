@@ -40,5 +40,6 @@
 #include <ranges>
 #include <span>
 #include <sstream>
+#include <type_traits>
 #include <utility>
 #include <vector>
