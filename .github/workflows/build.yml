@@ -30,7 +30,7 @@ jobs:
             platform: x64
     steps:
       - name: Check out files
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.5.3
         with:
           submodules: true
           fetch-depth: 0
@@ -72,6 +72,7 @@ jobs:
           - Release
         arch:
           - x64
+          - arm64
         include:
           - configuration: Debug
             config: debug
@@ -79,11 +80,17 @@ jobs:
             config: release
     steps:
       - name: Check out files
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.5.3
         with:
           submodules: true
           fetch-depth: 0
           lfs: false
+
+      - name: Install dependencies (arm64)
+        if: matrix.arch == 'arm64'
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install crossbuild-essential-arm64
 
       - name: Install Premake5
         uses: abel0b/setup-premake@v2.2
@@ -100,6 +107,10 @@ jobs:
         run: |
           pushd build
           make config=${{matrix.config}}_${{matrix.arch}} -j$(nproc)
+        if: matrix.arch == 'arm64'  
+        env:
+          CC: aarch64-linux-gnu-gcc
+          CXX: aarch64-linux-gnu-g++
 
       - name: Upload ${{matrix.configuration}} ${{matrix.arch}} binaries
         uses: actions/upload-artifact@v3.1.2
