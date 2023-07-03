@@ -50,7 +50,7 @@ namespace
 		}
 		catch (const std::exception& ex)
 		{
-			console::error(utils::string::va("%s: '%s' contains invalid data!", ex.what(), filename.data()));
+			console::error(utils::string::va("%s. '%s' contains invalid data!\n", ex.what(), filename.data()));
 		}
 	}
 
