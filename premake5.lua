@@ -47,15 +47,6 @@ filter {"system:linux", "system:macosx"}
 	linkoptions "-pthread"
 filter {}
 
-if os.istarget("linux") then
-	filter { "platforms:arm64" }
-		buildoptions "--target=arm64-linux-gnu"
-		linkoptions "--target=arm64-linux-gnu"
-	filter {}
-
-	linkoptions "-fuse-ld=lld"
-end
-
 filter {"system:macosx", "platforms:arm64"}
 	buildoptions "-arch arm64"
 	linkoptions "-arch arm64"
