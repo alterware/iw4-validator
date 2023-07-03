@@ -14,14 +14,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-win:
+  build-windows:
     name: Build Windows
     runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
         configuration:
-          - Debug
           - Release
         arch:
           - x64
@@ -68,14 +67,11 @@ jobs:
       fail-fast: false
       matrix:
         configuration:
-          - Debug
           - Release
         arch:
           - x64
           - arm64
         include:
-          - configuration: Debug
-            config: debug
           - configuration: Release
             config: release
     steps:
@@ -90,7 +86,7 @@ jobs:
         if: matrix.arch == 'arm64'
         run: |
           sudo apt-get update
-          sudo apt-get -y install crossbuild-essential-arm64
+          sudo apt-get install crossbuild-essential-arm64 -y
 
       - name: Install Premake5
         uses: abel0b/setup-premake@v2.2
@@ -103,7 +99,12 @@ jobs:
       - name: Set up problem matching
         uses: ammaraskar/gcc-problem-matcher@master
 
-      - name: Set up environment variables
+      - name: Set up CC environment variable
+        if: matrix.arch == 'arm64'
+        run: |
+          echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+
+      - name: Set up CXX environment variable
         if: matrix.arch == 'arm64'
         run: |
           echo "CXX=aarch64-linux-gnu-g++" >> $GITHUB_ENV
@@ -122,7 +123,7 @@ jobs:
 
   deploy:
     name: Deploy artifacts
-    needs: [build-linux, build-win]
+    needs: [build-linux, build-windows]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master')
     steps:

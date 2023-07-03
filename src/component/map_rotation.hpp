@@ -2,9 +2,33 @@
 
 namespace map_rotation
 {
-	struct map_rotation_parse_error : public std::exception
+#define DEFAULT_ERROR_MSG "Map Rotation Parse Error"
+
+	class map_rotation_parse_error : public std::runtime_error
 	{
-		[[nodiscard]] const char* what() const noexcept override { return "Map Rotation Parse Error"; }
+		static std::string fmt(const std::string& message)
+		{
+			std::string error = DEFAULT_ERROR_MSG;
+
+			if (!message.empty())
+			{
+				error.append(": ");
+				error.append(message);
+			}
+
+			return error;
+		}
+
+	public:
+		map_rotation_parse_error(const std::string& message)
+			: std::runtime_error(fmt(message))
+		{
+		}
+
+		map_rotation_parse_error()
+			: std::runtime_error(DEFAULT_ERROR_MSG)
+		{
+		}
 	};
 
 	class rotation_data
@@ -14,14 +38,14 @@ namespace map_rotation
 
 		rotation_data();
 
-		void randomize();
-
 		void add_entry(const std::string& key, const std::string& value);
+
+		[[nodiscard]] std::size_t get_entries_size() const noexcept;
+
+		[[nodiscard]] rotation_entry& get_next_entry();
 
 		[[nodiscard]] bool contains(const std::string& key, const std::string& value) const;
 		[[nodiscard]] bool empty() const noexcept;
-		[[nodiscard]] std::size_t get_entries_size() const noexcept;
-		[[nodiscard]] rotation_entry& get_next_entry();
 
 		void parse(const std::string& data);
 
