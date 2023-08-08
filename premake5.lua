@@ -6,6 +6,9 @@ targetdir "%{wks.location}/bin/%{cfg.platform}/%{cfg.buildcfg}"
 
 configurations {"Debug", "Release"}
 
+language "C++"
+cppdialect "C++20"
+
 if os.istarget("darwin") then
 	platforms {"x64", "arm64"}
 else
@@ -24,14 +27,6 @@ filter "platforms:arm64"
 	architecture "ARM64"
 filter {}
 
-filter {"language:C++", "toolset:not msc*"}
-	buildoptions "-std=c++20"
-filter {}
-
-filter "toolset:msc*"
-	buildoptions "/std:c++20"
-filter {}
-
 filter {"system:windows"}
 	systemversion "latest"
 filter {}
@@ -42,9 +37,9 @@ editandcontinue "Off"
 warnings "Extra"
 characterset "ASCII"
 
-filter {"system:linux", "system:macosx"}
-	buildoptions "-pthread"
-	linkoptions "-pthread"
+filter { "system:linux", "toolset:clang", "platforms:arm64" }
+	buildoptions "--target=arm64-linux-gnu"
+	linkoptions "--target=arm64-linux-gnu"
 filter {}
 
 filter {"system:macosx", "platforms:arm64"}
@@ -59,7 +54,7 @@ end
 flags {"NoIncrementalLink", "NoMinimalRebuild", "MultiProcessorCompile", "No64BitChecks"}
 
 filter "configurations:Release"
-	optimize "Speed"
+	optimize "Size"
 	defines "NDEBUG"
 	flags "FatalCompileWarnings"
 filter {}
