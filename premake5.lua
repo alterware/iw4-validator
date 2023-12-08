@@ -24,14 +24,6 @@ filter "platforms:arm64"
 	architecture "ARM64"
 filter {}
 
-filter {"language:C++", "toolset:not msc*"}
-	buildoptions "-std=c++20"
-filter {}
-
-filter "toolset:msc*"
-	buildoptions "/std:c++20"
-filter {}
-
 filter {"system:windows"}
 	systemversion "latest"
 filter {}
@@ -72,6 +64,7 @@ filter {}
 project "iw4-validator"
 kind "ConsoleApp"
 language "C++"
+cppdialect "C++20"
 
 targetname "iw4-validator"
 
