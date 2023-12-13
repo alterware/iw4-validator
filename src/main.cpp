@@ -24,7 +24,10 @@ namespace
 			throw std::runtime_error(utils::string::va("'%s' is empty", filename.data()));
 		}
 
-		game::parse_client_effects(data.data());
+		if (game::parse_client_effects(data.data()))
+		{
+			console::info("Successfully parsed '%s'\n", filename.data());
+		}
 	}
 
 	void load_map_rotation(const std::string& filename)
