@@ -4,7 +4,7 @@ location "./build"
 objdir "%{wks.location}/obj"
 targetdir "%{wks.location}/bin/%{cfg.platform}/%{cfg.buildcfg}"
 
-configurations {"Debug", "Release"}
+configurations {"debug", "release"}
 
 if os.istarget("darwin") then
 	platforms {"x64", "arm64"}
@@ -50,13 +50,13 @@ end
 
 flags {"NoIncrementalLink", "NoMinimalRebuild", "MultiProcessorCompile", "No64BitChecks"}
 
-filter "configurations:Release"
+filter "configurations:release"
 	optimize "Speed"
 	defines "NDEBUG"
 	flags "FatalCompileWarnings"
 filter {}
 
-filter "configurations:Debug"
+filter "configurations:debug"
 	optimize "Debug"
 	defines {"DEBUG", "_DEBUG"}
 filter {}
