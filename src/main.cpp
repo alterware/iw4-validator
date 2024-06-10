@@ -21,12 +21,12 @@ namespace
 		std::string data;
 		if (!utils::io::read_file(filename, &data) || data.empty())
 		{
-			throw std::runtime_error(utils::string::va("'%s' is empty", filename.data()));
+			throw std::runtime_error(utils::string::va("'%s' is empty", filename.c_str()));
 		}
 
 		if (game::parse_client_effects(data.data()))
 		{
-			console::info("Successfully parsed '%s'\n", filename.data());
+			console::info("Successfully parsed '%s'\n", filename.c_str());
 		}
 	}
 
@@ -41,8 +41,10 @@ namespace
 		std::string data;
 		if (!utils::io::read_file(filename, &data) || data.empty())
 		{
-			throw std::runtime_error(utils::string::va("'%s' is empty", filename.data()));
+			throw std::runtime_error(utils::string::va("'%s' is empty", filename.c_str()));
 		}
+
+		console::info("Please ensure that the map rotation is in all lowercase\n");
 
 		try
 		{
@@ -53,7 +55,7 @@ namespace
 		}
 		catch (const std::exception& ex)
 		{
-			console::error(utils::string::va("%s. '%s' contains invalid data!\n", ex.what(), filename.data()));
+			console::error(utils::string::va("%s. '%s' contains invalid data!\n", ex.what(), filename.c_str()));
 		}
 	}
 

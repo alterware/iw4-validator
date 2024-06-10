@@ -2,6 +2,7 @@
 
 #include <utils/string.hpp>
 
+#include "console.hpp"
 #include "map_rotation.hpp"
 
 using namespace std::literals;
@@ -10,6 +11,29 @@ namespace map_rotation
 {
 	namespace
 	{
+		bool is_valid_game_type(const std::string& game_type)
+		{
+			static std::array<const char*, 14> game_types = 
+			{
+				"arena",
+				"conf",
+				"ctf",
+				"dd",
+				"dm",
+				"dom",
+				"gtnw",
+				"gun",
+				"infect",
+				"koth",
+				"oneflag",
+				"sab",
+				"sd",
+				"war",
+			};
+
+			return std::ranges::find(game_types, game_type) != std::end(game_types);
+		}
+
 		bool is_valid_key(const std::string& key)
 		{
 			static std::array<const char*, 3> keys =
@@ -69,10 +93,15 @@ namespace map_rotation
 			if (is_valid_key(key))
 			{
 				this->add_entry(key, value);
+
+				if (key == "gametype" && !is_valid_game_type(value))
+				{
+					console::warn("It appears you have an invalid game type in your map rotation (%s)", value.c_str());
+				}
 			}
 			else
 			{
-				throw map_rotation_parse_error(utils::string::va("Invalid key '%s'", key.data()));
+				throw map_rotation_parse_error(utils::string::va("Invalid key '%s'", key.c_str()));
 			}
 		}
 	}

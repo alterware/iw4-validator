@@ -2,7 +2,7 @@
 
 namespace map_rotation
 {
-#define DEFAULT_ERROR_MSG "Map Rotation Parse Error"
+	constexpr auto* DEFAULT_ERROR_MSG = "Map Rotation Parse Error";
 
 	class map_rotation_parse_error : public std::runtime_error
 	{

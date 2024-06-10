@@ -7,12 +7,12 @@ namespace utils
 	{
 		bool remove_file(const std::string& file)
 		{
-			return std::remove(file.data()) == 0;
+			return std::remove(file.c_str()) == 0;
 		}
 
 		bool move_file(const std::string& src, const std::string& target)
 		{
-			return std::rename(src.data(), target.data()) == 0;
+			return std::rename(src.c_str(), target.c_str()) == 0;
 		}
 
 		bool file_exists(const std::string& file)
