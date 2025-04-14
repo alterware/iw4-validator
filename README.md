@@ -8,7 +8,7 @@ You may use this tool to validate "client effects" GSC files for the IW4 engine 
 - Install [Premake5][premake5-link] and add it to your system PATH
 - Clone this repository using [Git][git-link]
 - Update the submodules using ``git submodule update --init --recursive``
-- Run Premake with either of these two options ``premake5 vs2022`` (Windows) or ``premake5 gmake2`` (Linux/macOS)
+- Run Premake with either of these two options ``premake5 vs2022`` (Windows) or ``premake5 gmake`` (Linux/macOS)
 
 #### Command line arguments
 
