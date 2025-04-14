@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PREMAKE_VERSION: "5.0.0-beta2"
+  PREMAKE_VERSION: "5.0.0-beta6"
 
 jobs:
   build-windows:
@@ -26,8 +26,10 @@ jobs:
       fail-fast: false
       matrix:
         configuration:
-          - debug
           - release
+        compiler:
+          - msvc
+          - clang
         arch:
           - x86
           - x64
@@ -55,19 +57,24 @@ jobs:
         with:
           version: ${{ env.PREMAKE_VERSION }}
 
-      - name: Generate project files
+      - name: Generate project files (clang)
+        if: matrix.compiler == 'clang'
+        run: premake5 --cc=${{matrix.compiler}} vs2022
+
+      - name: Generate project files (msvc)
+        if: matrix.compiler == 'msvc'
         run: premake5 vs2022
 
       - name: Set up problem matching
         uses: ammaraskar/msvc-problem-matcher@master
 
-      - name: Build ${{matrix.arch}} ${{matrix.configuration}} binaries
-        run: msbuild /m /v:minimal /p:Configuration=${{matrix.configuration}} /p:Platform=${{matrix.platform}} build/iw4-validator.sln
+      - name: Build ${{matrix.arch}} ${{matrix.configuration}} ${{matrix.compiler}} binaries
+        run: msbuild /m /p:Configuration=${{matrix.configuration}} /p:Platform=${{matrix.platform}} build/iw4-validator.sln
 
-      - name: Upload ${{matrix.arch}} ${{matrix.configuration}} binaries
+      - name: Upload ${{matrix.arch}} ${{matrix.configuration}} ${{matrix.compiler}} binaries
         uses: actions/upload-artifact@main
         with:
-          name: windows-${{matrix.arch}}-${{matrix.configuration}}
+          name: windows-${{matrix.arch}}-${{matrix.configuration}}-${{matrix.compiler}}
           path: |
             build/bin/${{matrix.arch}}/${{matrix.configuration}}/iw4-validator.exe
             build/bin/${{matrix.arch}}/${{matrix.configuration}}/iw4-validator.pdb
@@ -75,17 +82,22 @@ jobs:
   build-linux:
     name: Build Linux
     runs-on: ubuntu-latest
+    container: ubuntu:noble
     strategy:
       fail-fast: false
       matrix:
         configuration:
-          - debug
           - release
         arch:
           - x86
-          - x64
+          - amd64
           - arm64
     steps:
+      - name: Install g++ and multilib
+        run: |
+          apt-get update
+          apt-get install -y wget tar git make gcc g++ gcc-multilib g++-multilib
+
       - name: Check out files
         uses: actions/checkout@main
         with:
@@ -96,15 +108,15 @@ jobs:
       - name: Install dependencies (arm64)
         if: matrix.arch == 'arm64'
         run: |
-          sudo apt-get update
-          sudo apt-get install crossbuild-essential-arm64 -y
+          apt-get update
+          apt-get install -y crossbuild-essential-arm64
 
       - name: Install dependencies (x86)
         if: matrix.arch == 'x86'
         run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get -y install gcc-multilib g++-multilib
+          dpkg --add-architecture i386
+          apt-get update
+          apt-get -y install gcc-multilib g++-multilib
 
       - name: Install Premake5
         uses: diamante0018/setup-premake@master
@@ -112,7 +124,7 @@ jobs:
           version: ${{ env.PREMAKE_VERSION }}
 
       - name: Generate project files
-        run: premake5 gmake2
+        run: premake5 gmake
 
       - name: Set up problem matching
         uses: ammaraskar/gcc-problem-matcher@master
@@ -129,8 +141,7 @@ jobs:
 
       - name: Build ${{matrix.arch}} ${{matrix.configuration}} binaries
         run: |
-          pushd build
-          make config=${{matrix.configuration}}_${{matrix.arch}} -j$(nproc)
+          make -C build config=${{matrix.configuration}}_${{matrix.arch}} -j$(nproc)
 
       - name: Upload ${{matrix.arch}} ${{matrix.configuration}} binaries
         uses: actions/upload-artifact@main
@@ -165,61 +176,3 @@ jobs:
 
       - name: Upload iw4-validator binary
         run: rsync -avz iw4-validator.exe ${{ secrets.ALTERWARE_MASTER_SSH_USER }}@${{ secrets.ALTERWARE_MASTER_SSH_ADDRESS }}:${{ env.ALTERWARE_MASTER_PATH }}/tools/
-
-  docker:
-    name: Create Docker Image
-    needs: [build-linux, build-windows]
-    runs-on: ubuntu-latest
-    if: github.ref_type == 'tag'
-    steps:
-      - name: Check out files
-        uses: actions/checkout@main
-        with:
-          sparse-checkout: |
-            Dockerfile
-            README.md
-          sparse-checkout-cone-mode: false
-
-      - name: Download Release binaries
-        uses: actions/download-artifact@main
-
-      - name: Compress Binaries
-        run: |
-          for dir in */; do
-            if [[ $dir == *"windows"* ]]; then
-              cd "$dir" && zip -r "../${dir%/}.zip" . && cd ..
-            else
-              tar -czvf "${dir%/}.tar.gz" -C "$dir" .
-            fi
-          done
-        shell: bash
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3.3.0
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v3.2.0
-        with:
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - id: meta
-        uses: docker/metadata-action@v5.5.1
-        with:
-          images: |
-            alterware/iw4-validator
-          tags: |
-            ${{ github.ref_name }}
-            latest
-
-      - name: Build and Push Docker Image
-        id: build-and-push
-        uses: docker/build-push-action@v5.3.0
-        with:
-          context: .
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
