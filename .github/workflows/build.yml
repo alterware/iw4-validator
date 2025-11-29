@@ -162,7 +162,7 @@ jobs:
       - name: Download Release binaries
         uses: actions/download-artifact@main
         with:
-          name: windows-x64-release
+          name: windows-x64-release-msvc
 
       # Set up committer info and GPG key
       - name: Install SSH key
